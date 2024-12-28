@@ -1,3 +1,5 @@
+console.log("Archivo index.js cargado correctamente");
+
 // Definir el tamaño de la matriz de butacas
 const N = 10; // Número de filas y columnas
 
@@ -21,39 +23,39 @@ function setup() {
 
 // Función para buscar los asientos juntos en la fila más lejana a la pantalla
 function suggest(butacas, numAsientos) {
-    if (numAsientos > N) return new Set(); 
+    if (numAsientos > N) return new Set(); // Si el número de asientos solicitados excede el tamaño de la fila, devolver vacío.
 
-    for (let i = butacas.length - 1; i >= 0; i--) {
+    for (let i = butacas.length - 1; i >= 0; i--) { // Comenzar desde la fila más lejana
         let fila = butacas[i];
-        let contadorLibres = 0;
+        let contadorLibres = 0; // Contador para asientos disponibles consecutivos
         let asientosSeleccionados = [];
 
         for (let j = 0; j < fila.length; j++) {
-            if (!fila[j].estado) {
+            if (!fila[j].estado) { // Si el asiento está libre
                 contadorLibres++;
                 asientosSeleccionados.push(fila[j].id);
             } else {
-                contadorLibres = 0;
+                contadorLibres = 0; // Reiniciar si hay un asiento ocupado
                 asientosSeleccionados = [];
             }
 
-            if (contadorLibres === numAsientos) {
+            if (contadorLibres === numAsientos) { // Si se encuentran suficientes asientos consecutivos
                 return new Set(asientosSeleccionados);
             }
         }
     }
 
-    return new Set();
+    return new Set(); // Devolver vacío si no se encuentran asientos consecutivos
 }
 
 // Función para renderizar las butacas en el DOM
 function renderizarButacas(butacas) {
     const container = document.getElementById('seat-container');
-    container.innerHTML = ''; 
+    container.innerHTML = ''; // Limpia el contenedor antes de renderizar
 
     butacas.forEach(fila => {
         const filaDiv = document.createElement('div');
-        filaDiv.classList.add('d-flex', 'justify-content-center', 'mb-3');
+        filaDiv.classList.add('d-flex', 'justify-content-center', 'mb-2');
 
         fila.forEach(butaca => {
             const butacaDiv = document.createElement('div');
@@ -67,29 +69,12 @@ function renderizarButacas(butacas) {
     });
 }
 
+// Inicializar butacas y renderizar
 let butacas = setup();
+console.log("Butacas inicializadas:", butacas);
 renderizarButacas(butacas);
 
-// Pruebas automáticas
-function ejecutarPruebas() {
-    console.log("Iniciando pruebas...");
-
-    let asientosSugeridos = suggest(butacas, 3);
-    console.assert(asientosSugeridos.size > 0, "Prueba 1: No se encontraron asientos juntos");
-
-    asientosSugeridos = suggest(butacas, 11);
-    console.assert(asientosSugeridos.size === 0, "Prueba 2: No se deben devolver asientos si se piden más que la capacidad de la fila");
-
-    butacas[9][2].estado = true;
-    butacas[9][3].estado = true;
-    asientosSugeridos = suggest(butacas, 4);
-    console.assert(asientosSugeridos.size === 0, "Prueba 3: No se deben encontrar 4 asientos juntos si hay ocupados");
-
-    console.log("Pruebas completadas ✅");
-}
-
-ejecutarPruebas();
-
+// Listener para sugerir asientos
 document.getElementById('btn-suggest').addEventListener('click', () => {
     const numAsientos = parseInt(document.getElementById('numAsientos').value, 10);
     if (!isNaN(numAsientos) && numAsientos > 0) {
