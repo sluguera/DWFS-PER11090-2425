@@ -20,7 +20,7 @@ function renderizarButacas(butacas, asientosSugeridos = []) {
     const container = document.getElementById('seat-container');
     container.innerHTML = ''; // Limpiar contenedor
 
-    butacas.forEach((fila, i) => {
+    butacas.forEach(fila => {
         const filaDiv = document.createElement('div');
         filaDiv.classList.add('d-flex', 'justify-content-center', 'mb-1');
 
@@ -47,63 +47,65 @@ function renderizarButacas(butacas, asientosSugeridos = []) {
 
 // Seleccionar o deseleccionar una butaca manualmente
 function seleccionarButaca(id) {
-    for (let fila of butacas) {
-        let butaca = fila.find(b => b.id === id);
-        if (butaca && !butaca.estado) { // Solo butacas libres
-            butaca.selected = !butaca.selected; // Alternar selección
-        }
-    }
-    renderizarButacas(butacas); // Actualizar la vista
+    butacas.forEach(fila => {
+        fila.forEach(butaca => {
+            if (butaca.id === id && !butaca.estado) {
+                butaca.selected = !butaca.selected;
+            }
+        });
+    });
+    renderizarButacas(butacas);
 }
 
 // Sugerir asientos juntos
 function suggest(butacas, numAsientos) {
-    console.log(`Sugerir ${numAsientos} asientos`);
-    for (let i = butacas.length - 1; i >= 0; i--) {
-        let libres = 0;
-        let asientosSeleccionados = [];
+    let asientosSugeridos = [];
+    let tempSeleccionados = [];
+    let libres = 0;
 
-        for (let j = 0; j < butacas[i].length; j++) {
-            if (!butacas[i][j].estado) {
+    butacas.forEach(fila => {
+        tempSeleccionados = []; // Reiniciar selección temporal para cada fila
+        libres = 0; // Reiniciar contador de libres para cada fila
+
+        fila.forEach(butaca => {
+            if (!butaca.estado) {
                 libres++;
-                asientosSeleccionados.push(butacas[i][j].id);
+                tempSeleccionados.push(butaca.id);
+
+                if (libres === numAsientos && asientosSugeridos.length === 0) {
+                    // Si encontramos suficientes asientos en una fila, los almacenamos
+                    asientosSugeridos = [...tempSeleccionados];
+                }
             } else {
-                libres = 0;
-                asientosSeleccionados = [];
+                libres = 0; // Reiniciar si encontramos una ocupada
+                tempSeleccionados = [];
             }
+        });
+    });
 
-            if (libres === numAsientos) {
-                console.log(`Asientos sugeridos: ${asientosSeleccionados.join(', ')}`);
-                renderizarButacas(butacas, asientosSeleccionados);
-                return asientosSeleccionados;
-            }
-        }
-    }
-
-    console.log("No hay suficientes asientos disponibles.");
-    renderizarButacas(butacas); // Re-render sin sugerencias
-    return [];
+    renderizarButacas(butacas, asientosSugeridos);
 }
 
 // Confirmar la reserva
 function confirmarReserva() {
     let asientosReservados = [];
-    for (let fila of butacas) {
+    butacas.forEach(fila => {
         fila.forEach(butaca => {
             if (butaca.selected) {
-                butaca.estado = true; // Marcar como ocupado
-                butaca.selected = false; // Quitar selección
+                butaca.estado = true;
+                butaca.selected = false;
                 asientosReservados.push(butaca.id);
             }
         });
-    }
+    });
 
     if (asientosReservados.length > 0) {
-        renderizarButacas(butacas);
         console.log(`Reserva confirmada para las butacas: ${asientosReservados.join(', ')}`);
     } else {
         alert("No has seleccionado ninguna butaca.");
     }
+
+    renderizarButacas(butacas);
 }
 
 // Manejar cambios en el input
@@ -111,19 +113,12 @@ function handleInputChange() {
     const numAsientos = parseInt(document.getElementById('numAsientos').value, 10);
 
     if (isNaN(numAsientos) || numAsientos <= 0) {
-        alert("Por favor, introduce un número válido de asientos.");
-        renderizarButacas(butacas);
-        return;
-    }
-
-    if (numAsientos > N) {
+        alert("Introduce un número válido de asientos.");
+    } else if (numAsientos > N) {
         alert(`No puedes reservar más de ${N} asientos.`);
-        document.getElementById('numAsientos').value = '';
-        renderizarButacas(butacas);
-        return;
+    } else {
+        suggest(butacas, numAsientos);
     }
-
-    suggest(butacas, numAsientos);
 }
 
 // Inicialización
